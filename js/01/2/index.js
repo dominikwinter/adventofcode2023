@@ -25,7 +25,7 @@ const map = {
 
 const words = Object.keys(map);
 
-const input = fs.readFileSync(`${__dirname}/input.txt`, "utf8");
+const input = fs.readFileSync(`${__dirname}/../input.txt`, "utf8");
 
 const numbers = input
   .trim()
