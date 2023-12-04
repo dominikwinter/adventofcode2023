@@ -1,66 +1,72 @@
 const fs = require("fs");
+const util = require("util");
+util.inspect.defaultOptions.maxArrayLength = null;
 
+const log = console.info.bind(console);
 const input = fs.readFileSync(`${__dirname}/../input.txt`, "utf8");
 const grid = input
   .trim()
   .split("\n")
   .map((line) => line.split(""));
 
-let nums = [
-  {
-    val: "",
-    sym: "",
-  },
-];
-let cnt = 0;
+const width = grid[0].length;
+const height = grid.length;
 
-for (let y = 0, l = grid.length; y < l; ++y) {
-  for (let x = 0, m = grid[y].length; x < m; ++x) {
+const isNumber = (char) => char && /^\d+$/.test(char);
+const isSymbol = (char) => char && char !== "." && !/^\d+$/.test(char);
+const sum = (nums) => nums.reduce((acc, cur) => acc + cur, 0);
+const mult = (nums) => nums.reduce((acc, cur) => acc * cur, 0);
+
+// prettier-ignore
+const neighbors = (x, y, endless = false) => {
+  let xm1 = x - 1;
+  let xp1 = x + 1;
+  let ym1 = y - 1;
+  let yp1 = y + 1;
+
+  if (endless) {
+    xm1 = xm1 < 0 ? width - 1 : x - 1;
+    xp1 = xp1 >= width ? 0 : x + 1;
+    ym1 = ym1 < 0 ? height - 1 : y - 1;
+    yp1 = yp1 >= height ? 0 : y + 1;
+  }
+
+  return [
+    [xm1, ym1], [x, ym1], [xp1, ym1],
+    [xm1, y  ],           [xp1, y  ],
+    [xm1, yp1], [x, yp1], [xp1, yp1],
+  ]
+}
+
+const founds = [];
+
+for (let y = 0; y < grid.length; ++y) {
+  let number = "";
+  let hasSymbol = false;
+
+  for (let x = 0; x < grid[y].length; ++x) {
     const char = grid[y][x];
 
-    if (isNum(char)) {
-      nums[cnt].val += `${char}`;
-      nums[cnt].sym += hasSymbol(grid, x, y);
+    if (isNumber(char)) {
+      number += `${char}`;
+
+      if (neighbors(x, y, true).some(([x, y]) => isSymbol(grid[y]?.[x]))) {
+        hasSymbol = true;
+      }
     } else {
-      ++cnt;
-      nums[cnt] = {
-        val: "",
-        sym: "",
-      };
+      if (number.length && hasSymbol) {
+        founds.push(parseInt(number));
+      }
+
+      number = "";
+      hasSymbol = false;
     }
+  }
+
+  if (number.length && hasSymbol) {
+    founds.push(parseInt(number));
   }
 }
 
-numbers = nums
-  .map((num) => {
-    if (num.sym.includes("1")) {
-      return parseInt(num.val);
-    } else {
-      return null;
-    }
-  })
-  .filter(Boolean);
-
-const sum = numbers.reduce((acc, number) => acc + number, 0);
-console.info(sum);
-
-function isNum(str) {
-  return /^\d+$/.test(str);
-}
-
-function isSymbol(str) {
-  return str && !isNum(str) && str !== ".";
-}
-
-function hasSymbol(grid, x, y) {
-  return isSymbol(grid[y - 1]?.[x]) ||
-    isSymbol(grid[y + 1]?.[x]) ||
-    isSymbol(grid[y]?.[x - 1]) ||
-    isSymbol(grid[y]?.[x + 1]) ||
-    isSymbol(grid[y - 1]?.[x - 1]) ||
-    isSymbol(grid[y + 1]?.[x - 1]) ||
-    isSymbol(grid[y - 1]?.[x + 1]) ||
-    isSymbol(grid[y + 1]?.[x + 1])
-    ? "1"
-    : " ";
-}
+log(founds);
+log(sum(founds));
